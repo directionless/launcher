@@ -1,6 +1,7 @@
 package gsettings
 
 import (
+	"io/ioutil"
 	"os"
 	"testing"
 
@@ -9,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestParseValue(t *testing.T) {
+func xTestParseValue(t *testing.T) {
 	t.Parallel()
 
 	var tests = []struct {
@@ -77,6 +78,17 @@ func TestParseValue(t *testing.T) {
 
 }
 
-func TestParseGSettings(t *testing.T) {
+func TestParseGSettingsSource1(t *testing.T) {
 	t.Parallel()
+
+	tableInstance := &tableInstance{logger: log.NewJSONLogger(os.Stderr)}
+
+	testData, err := ioutil.ReadFile("testdata/org.gnome.desktop.interface.txt")
+	require.NoError(t, err, "read test data")
+
+	results, err := tableInstance.parseGSettings("testUser", string(testData))
+	require.NoError(t, err, "parse test data")
+
+	_ = results
+
 }

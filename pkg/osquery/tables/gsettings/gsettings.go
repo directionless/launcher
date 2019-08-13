@@ -1,5 +1,25 @@
 package gsettings
 
+// gsettings is a simple table interface to GSettings. To make this
+// simple, there are a variety of tradeoffs.
+//
+// gseetings are stored in several different backends, across several
+// files. Because of this complexity, it's hard to utilize a simple
+// parser. It's better to use provided tools. There are some c
+// bindings, and at least one go wrapper for those. But, pulling that
+// in breaks cross compilation and it's not wholly clear to me it
+// works.
+//
+// So, we do this via an exec call to `gsettings`. Unfortunately the
+// text output is non-trivial to parse. The simple cases are simple,
+// but there appears to be a long tail of very ugly complexity. This
+// handles the simple cases, and doesn;t try to handle the more
+// complex ones.
+//
+// References:
+//
+//   https://developer.gnome.org/glib/stable/gvariant-text.html
+
 import (
 	"context"
 	"fmt"
@@ -124,7 +144,7 @@ func (t *tableInstance) parseValue(components []string) (string, string, error) 
 
 	level.Debug(t.logger).Log(
 		"msg", "unable to parse type from gsettings",
-		"components", fmt.Sprintf("%+v", component),
+		"components", fmt.Sprintf("%+v", components),
 	)
 
 	return "", "", errors.Errorf("Can't parse gsetting value from %+v", components)
