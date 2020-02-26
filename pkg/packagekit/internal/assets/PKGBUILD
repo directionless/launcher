@@ -1,0 +1,19 @@
+pkgname=kolide-{{.Opts.Identifier}}
+pkgver={{.Opts.Version}}
+pkgrel=1
+pkgdesc="Kolide Launcher for Osquery ({{.Opts.Identifier}})"
+arch=('x86_64')
+url="https://kolide.com/launcher/"
+license=('MIT')
+depends=("glibc>=2.28", "filesystem")
+optdepends=()
+makedepends=()
+
+package() {
+  SRC={{.Opts.Root}}
+
+  cd "${SRC}"
+
+  # fake rsync
+  tar cf - . | (cd "${pkgdir}"; tar xf -)
+}
