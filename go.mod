@@ -3,7 +3,7 @@ module github.com/kolide/launcher
 require (
 	cloud.google.com/go v0.43.0
 	github.com/Masterminds/semver v1.4.2
-	github.com/Microsoft/go-winio v0.4.11 // indirect
+	github.com/Microsoft/go-winio v0.4.14 // indirect
 	github.com/Shopify/logrus-bugsnag v0.0.0-20171204204709-577dee27f20d // indirect
 	github.com/WatchBeam/clock v0.0.0-20170901150240-b08e6b4da7ea // indirect
 	github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412 // indirect
@@ -63,7 +63,6 @@ require (
 	github.com/pkg/errors v0.8.1
 	github.com/prometheus/client_golang v0.9.2 // indirect
 	github.com/serenize/snaker v0.0.0-20171204205717-a683aaf2d516
-	github.com/sirupsen/logrus v1.4.0 // indirect
 	github.com/spf13/viper v1.2.1 // indirect
 	github.com/stretchr/testify v1.5.1
 	github.com/theupdateframework/notary v0.6.1
