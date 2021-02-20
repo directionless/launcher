@@ -4,10 +4,10 @@ import (
 	"github.com/kolide/launcher/pkg/launcher"
 	"github.com/kolide/launcher/pkg/osquery/tables/dataflattentable"
 
-	"go.etcd.io/bbolt"
 	"github.com/go-kit/kit/log"
 	osquery "github.com/kolide/osquery-go"
 	"github.com/kolide/osquery-go/plugin/table"
+	"go.etcd.io/bbolt"
 )
 
 // LauncherTables returns launcher-specific tables

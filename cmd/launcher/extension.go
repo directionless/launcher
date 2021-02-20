@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"go.etcd.io/bbolt"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/kolide/kit/actor"
@@ -21,6 +20,7 @@ import (
 	"github.com/kolide/osquery-go/plugin/distributed"
 	osquerylogger "github.com/kolide/osquery-go/plugin/logger"
 	"github.com/pkg/errors"
+	"go.etcd.io/bbolt"
 )
 
 // TODO: the extension, runtime, and client are all kind of entangled here. Untangle the underlying libraries and separate into units
