@@ -72,6 +72,14 @@ func main() {
 		}
 	}
 
+	// run in tables mode, if it looks like our caller is osquery
+	if implicitRunTables(os.Args) {
+		if err := runTables(os.Args[1:]); err != nil {
+			logutil.Fatal(logger, "err", err)
+		}
+		os.Exit(0)
+	}
+
 	// if the launcher is being ran with a positional argument,
 	// handle that argument. Fall-back to running launcher
 	if len(os.Args) > 1 && !strings.HasPrefix(os.Args[1], `-`) {
@@ -139,6 +147,8 @@ func runSubcommands() error {
 		run = runWindowsSvcForeground
 	case "version":
 		run = runVersion
+	case "tables":
+		run = runTables
 	default:
 		return errors.Errorf("Unknown subcommand %s", os.Args[1])
 	}
@@ -166,4 +176,22 @@ func runVersion(args []string) error {
 	version.PrintFull()
 	os.Exit(0)
 	return nil
+}
+
+// implicitRunTables examines the command line arguments to discern if
+// we should run in tables only mode.
+func implicitRunTables(args []string) bool {
+	includesSocket := false
+	includesTimeout := false
+
+	// These use HasSuffix, as a simple way to handle both `-` and `--`
+	for _, arg := range args {
+		if strings.HasSuffix(arg, "-timeout") {
+			includesTimeout = true
+		} else if strings.HasSuffix(arg, "-socket") {
+			includesSocket = true
+		}
+	}
+
+	return includesSocket && includesTimeout
 }
