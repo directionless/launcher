@@ -54,8 +54,11 @@ type osqueryOptions struct {
 	osqueryFlags          []string
 	stdout                io.Writer
 	stderr                io.Writer
+	stdin                 io.Reader
+	ctx                   context.Context
 	retries               uint
 	verbose               bool
+	interactive           bool
 }
 
 // OsqueryInstance is the type which represents a currently running instance
@@ -134,8 +137,53 @@ func calculateOsqueryPaths(rootDir, extensionSocketPath string) (*osqueryFilePat
 // which will launch a properly configured osqueryd process.
 func (opts *osqueryOptions) createOsquerydCommand(osquerydBinary string, paths *osqueryFilePaths) (*exec.Cmd, error) {
 	// Create the reference instance for the running osquery instance
-	cmd := exec.Command(
-		osquerydBinary,
+
+	var cmd *exec.Cmd
+
+	if opts.ctx != nil {
+		cmd = exec.CommandContext(opts.ctx, osquerydBinary)
+	} else {
+		cmd = exec.Command(osquerydBinary)
+	}
+
+	if opts.stdout != nil {
+		cmd.Stdout = opts.stdout
+	}
+	if opts.stderr != nil {
+		cmd.Stderr = opts.stderr
+	}
+	if opts.stdin != nil {
+		cmd.Stdin = opts.stdin
+	}
+
+	// On darwin, run osquery using a magic macOS variable to ensure we
+	// get proper versions strings back. I'm not totally sure why apple
+	// did this, but reading SystemVersion.plist is different when this is set.
+	// See:
+	// https://eclecticlight.co/2020/08/13/macos-version-numbering-isnt-so-simple/
+	// https://github.com/osquery/osquery/pull/6824
+	cmd.Env = append(cmd.Env, "SYSTEM_VERSION_COMPAT=0")
+
+	// Augeas. No windows support, and only makes sense if we populated it.
+	if paths.augeasPath != "" && runtime.GOOS != "windows" {
+		cmd.Args = append(cmd.Args, fmt.Sprintf("--augeas_lenses=%s", paths.augeasPath))
+	}
+
+	if opts.interactive {
+		cmd.Args = append(cmd.Args,
+			"-S",
+			"--disable_events",
+			"--disable_database",
+			"--ephemeral",
+			fmt.Sprintf("--extensions_socket=%s", paths.extensionSocketPath),
+			fmt.Sprintf("--extensions_autoload=%s", paths.extensionAutoloadPath),
+			"--extensions_timeout=10",
+		)
+
+		return cmd, nil
+	}
+
+	cmd.Args = append(cmd.Args,
 		fmt.Sprintf("--logger_plugin=%s", opts.loggerPluginFlag),
 		fmt.Sprintf("--distributed_plugin=%s", opts.distributedPluginFlag),
 		"--disable_distributed=false",
@@ -159,18 +207,7 @@ func (opts *osqueryOptions) createOsquerydCommand(osquerydBinary string, paths *
 		"--config_accelerated_refresh=30",
 	)
 
-	// Augeas. No windows support, and only makes sense if we populated it.
-	if paths.augeasPath != "" && runtime.GOOS != "windows" {
-		cmd.Args = append(cmd.Args, fmt.Sprintf("--augeas_lenses=%s", paths.augeasPath))
-	}
-
 	cmd.Args = append(cmd.Args, platformArgs()...)
-	if opts.stdout != nil {
-		cmd.Stdout = opts.stdout
-	}
-	if opts.stderr != nil {
-		cmd.Stderr = opts.stderr
-	}
 
 	// Apply user-provided flags last so that they can override other flags set
 	// by Launcher (besides the six flags below)
@@ -189,14 +226,6 @@ func (opts *osqueryOptions) createOsquerydCommand(osquerydBinary string, paths *
 		"--extensions_timeout=10",
 		fmt.Sprintf("--config_plugin=%s", opts.configPluginFlag),
 	)
-
-	// On darwin, run osquery using a magic macOS variable to ensure we
-	// get proper versions strings back. I'm not totally sure why apple
-	// did this, but reading SystemVersion.plist is different when this is set.
-	// See:
-	// https://eclecticlight.co/2020/08/13/macos-version-numbering-isnt-so-simple/
-	// https://github.com/osquery/osquery/pull/6824
-	cmd.Env = append(cmd.Env, "SYSTEM_VERSION_COMPAT=0")
 
 	return cmd, nil
 }
@@ -309,6 +338,13 @@ func WithStderr(w io.Writer) OsqueryInstanceOption {
 	}
 }
 
+// WithStdin is a functional option to allow the user to define the stdin of the osquery process. By default, this is null.
+func WithStdin(w io.Reader) OsqueryInstanceOption {
+	return func(i *OsqueryInstance) {
+		i.opts.stdin = w
+	}
+}
+
 // WithLogger is a functional option which allows the user to pass a log.Logger
 // to be used for logging osquery instance status.
 func WithLogger(logger log.Logger) OsqueryInstanceOption {
@@ -321,6 +357,20 @@ func WithLogger(logger log.Logger) OsqueryInstanceOption {
 func WithOsqueryVerbose(v bool) OsqueryInstanceOption {
 	return func(i *OsqueryInstance) {
 		i.opts.verbose = v
+	}
+}
+
+// WithOsqueryInteractive sets up osquery in interactive mode.
+func WithOsqueryInteractive() OsqueryInstanceOption {
+	return func(i *OsqueryInstance) {
+		i.opts.interactive = true
+	}
+}
+
+// WithOsqueryContext adds a context to the exec.Command object
+func WithOsqueryContext(ctx context.Context) OsqueryInstanceOption {
+	return func(i *OsqueryInstance) {
+		i.opts.ctx = ctx
 	}
 }
 
@@ -609,12 +659,11 @@ func (r *Runner) launchOsqueryInstance() error {
 
 	level.Info(o.logger).Log(
 		"msg", "launching osqueryd",
-		"arg0", o.cmd.Path,
-		"args", strings.Join(o.cmd.Args, " "),
+		"cmd", o.cmd.String(),
 	)
 
 	// Launch osquery process (async)
-	err = o.cmd.Start()
+	err = r.instance.cmd.Start()
 	if err != nil {
 		// Failure here is indicative of a failure to exec. A missing
 		// binary? Bad permissions? TODO: Consider catching errors in the
