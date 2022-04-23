@@ -190,6 +190,21 @@ func NewExtension(client service.KolideService, db *bbolt.DB, opts ExtensionOpts
 // Shutdown() method.
 func (e *Extension) Start() {
 	e.wg.Add(1)
+
+	level.Debug(e.logger).Log(
+		"msg", "SEPH, there are bees",
+		"db path", e.db.Path(),
+		"db IsReadOnly", e.db.IsReadOnly(),
+	)
+
+	if key, err := NodeKeyFromDB(e.db); err != nil {
+		level.Debug(e.logger).Log("msg", "Start key fetch got error. Ignoring", "err", err)
+	} else if key == "" {
+		level.Debug(e.logger).Log("msg", "Start key fetch no key. Probably first enroll")
+	} else {
+		e.NodeKey = key
+	}
+
 	go e.writeLogsLoopRunner()
 }
 
@@ -367,6 +382,17 @@ func (e *Extension) Enroll(ctx context.Context) (string, bool, error) {
 		return "", true, errors.Wrap(err, "saving node key")
 	}
 
+	{
+		dbkey, dberr := NodeKeyFromDB(e.db)
+		level.Debug(e.logger).Log(
+			"msg", "Got node key",
+			"key", keyString,
+			"db key", dbkey,
+			"db err", dberr,
+		)
+	}
+
+	panic("Just stop")
 	e.NodeKey = keyString
 	return e.NodeKey, false, nil
 }

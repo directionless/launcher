@@ -109,6 +109,13 @@ func createExtensionRuntime(ctx context.Context, db *bbolt.DB, launcherClient se
 		return runner.Restart()
 	}
 
+	{
+		key, err := osquery.NodeKeyFromDB(db)
+		fmt.Println("just before:", "key", key, "err", err)
+		//panic("quickie")
+	}
+
+
 	return &actor.Actor{
 			// and the methods for starting and stopping the extension
 			Execute: func() error {
@@ -152,6 +159,12 @@ func createExtensionRuntime(ctx context.Context, db *bbolt.DB, launcherClient se
 					if invalid {
 						return errors.Wrap(err, "invalid enroll secret")
 					}
+				}
+
+				{
+					key, err := osquery.NodeKeyFromDB(db)
+					fmt.Println("from actor:", "key", key, "err", err)
+					//panic("quickie")
 				}
 
 				// start the extension
