@@ -111,7 +111,7 @@ func createExtensionRuntime(ctx context.Context, db *bbolt.DB, launcherClient se
 
 	{
 		key, err := osquery.NodeKeyFromDB(db)
-		fmt.Println("just before:", "key", key, "err", err)
+		level.Debug(logger).Log("msg", "createExtensionRuntime keyfetch", "key", key, "err", err)
 		//panic("quickie")
 	}
 
@@ -163,7 +163,7 @@ func createExtensionRuntime(ctx context.Context, db *bbolt.DB, launcherClient se
 
 				{
 					key, err := osquery.NodeKeyFromDB(db)
-					fmt.Println("from actor:", "key", key, "err", err)
+					level.Debug(logger).Log("msg", "actor execute keyfetch", "key", key, "err", err)
 					//panic("quickie")
 				}
 

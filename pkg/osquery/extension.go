@@ -168,6 +168,16 @@ func NewExtension(client service.KolideService, db *bbolt.DB, opts ExtensionOpts
 	if err != nil {
 		return nil, errors.Wrap(err, "get host identifier from db when creating new extension")
 	}
+
+	nodekey, err := NodeKeyFromDB(db)
+	if err != nil {
+		level.Debug(opts.Logger).Log("msg", "Initial keyfetch got error. Ignoring", "err", err)
+	} else if nodekey == "" {
+		level.Debug(opts.Logger).Log("msg", "Initial keyfetch no key. Probably first enroll")
+	} else {
+		level.Debug(opts.Logger).Log("msg", "Initial keyfetch found a key", "key", nodekey)
+	}
+	
 	initialRunner := &initialRunner{
 		logger:     opts.Logger,
 		identifier: identifier,
@@ -179,6 +189,7 @@ func NewExtension(client service.KolideService, db *bbolt.DB, opts ExtensionOpts
 		logger:        opts.Logger,
 		serviceClient: client,
 		db:            db,
+		//NodeKey: nodekey,
 		Opts:          opts,
 		done:          make(chan struct{}),
 		initialRunner: initialRunner,
@@ -198,11 +209,11 @@ func (e *Extension) Start() {
 	)
 
 	if key, err := NodeKeyFromDB(e.db); err != nil {
-		level.Debug(e.logger).Log("msg", "Start key fetch got error. Ignoring", "err", err)
+		level.Debug(e.logger).Log("msg", "Start keyfetch got error. Ignoring", "err", err)
 	} else if key == "" {
-		level.Debug(e.logger).Log("msg", "Start key fetch no key. Probably first enroll")
+		level.Debug(e.logger).Log("msg", "Start keyfetch no key. Probably first enroll")
 	} else {
-		e.NodeKey = key
+		level.Debug(e.logger).Log("msg", "Start keyfetch found a key", "key", key)
 	}
 
 	go e.writeLogsLoopRunner()
