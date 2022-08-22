@@ -19,7 +19,8 @@ import (
 func TestCreateTUFRepoDirectory(t *testing.T) {
 	t.Parallel()
 
-	localTUFRepoPath := t.TempDir()
+	//localTUFRepoPath := t.TempDir()
+	localTUFRepoPath := "/tmp/seph-autoupdater-new"
 
 	u := &Updater{logger: log.NewNopLogger()}
 	require.NoError(t, u.createTUFRepoDirectory(localTUFRepoPath, "pkg/autoupdate/assets", AssetDir))
@@ -71,7 +72,7 @@ func TestCreateTUFRepoDirectory(t *testing.T) {
 		require.True(t, json.Valid(jsonBytes), "file is json")
 	}
 
-	require.NoError(t, os.RemoveAll(localTUFRepoPath))
+	//require.NoError(t, os.RemoveAll(localTUFRepoPath))
 }
 
 func TestValidLocalFile(t *testing.T) {

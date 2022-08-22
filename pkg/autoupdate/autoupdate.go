@@ -45,6 +45,8 @@
 package autoupdate
 
 import (
+	"embed"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -54,12 +56,21 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/kolide/launcher/pkg/osquery"
 	"github.com/kolide/updater/tuf"
 	"github.com/pkg/errors"
 )
+
+//go:generate go run ./tuf_generator/ --config ../../tools/notary/config --dir assets2/launcher-tuf --gun kolide/launcher
+//go:embed assets2/launcher-tuf
+var launcherTufEmbed embed.FS
+
+//go:generate go run ./tuf_generator/ --config ../../tools/notary/config --dir assets2/osqueryd-tuf --gun kolide/osqueryd
+//go:embed assets2/osqueryd-tuf
+var osquerydTufEmbed embed.FS
 
 // UpdateChannel determines the TUF target for a Updater.
 // The Default UpdateChannel is Stable.
@@ -173,6 +184,12 @@ func NewUpdater(binaryPath, rootDirectory string, opts ...UpdaterOption) (*Updat
 	return &updater, nil
 }
 
+func (u *Updater) createLocalTufRepo2() error {
+	spew.Dump(u)
+
+	return nil
+}
+
 // createLocalTufRepo bootstraps local TUF metadata from bindata
 // assets. (TUF requires an initial starting repo)
 func (u *Updater) createLocalTufRepo() error {
@@ -182,9 +199,9 @@ func (u *Updater) createLocalTufRepo() error {
 	localRepo := filepath.Base(u.settings.LocalRepoPath)
 	assetPath := path.Join("pkg", "autoupdate", "assets", localRepo)
 
-	if err := u.createTUFRepoDirectory(u.settings.LocalRepoPath, assetPath, AssetDir); err != nil {
-		return errors.Wrapf(err, "createTUFRepoDirectory %s", u.settings.LocalRepoPath)
-	}
+	spew.Dump(localRepo)
+	spew.Dump(assetPath)
+
 	return nil
 }
 
@@ -251,7 +268,7 @@ func (u *Updater) validLocalFile(fullLocalPath string) bool {
 	}
 
 	logger := log.With(level.Info(u.logger),
-		"msg", "Replacing corrupt TUF file",
+		"msg", "Validating local tuf repo",
 		"file", fullLocalPath,
 	)
 
