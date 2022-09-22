@@ -58,6 +58,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	fmt.Printf("Setting up TUF repo for %s\n", *fsGUN)
+
 	if err := setupRepo(*fsLocalRepo, *fsGUN, *fsRemoteURL, *fsNotaryConfigDir); err != nil {
 		fmt.Fprintf(os.Stderr, "Got error: %v\n", err)
 		os.Exit(1)
