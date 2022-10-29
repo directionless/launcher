@@ -10,18 +10,31 @@ import (
 	"github.com/go-kit/log/level"
 )
 
-// Open questions with this PoC:
+// This PoC is based on a very plain object model. The initial control structure is a map of subsystem to object
+// hashes, like this:
+//   {
+//     "options": "98ea6e4f216f2fb4b69fff9b3a44842c38686ca685f3f55dc48c5d3fb1107be4",
+//     "data": "abc6fd595fc079d3114d4b71a4d84b1d1d0f79df1e70f8813212f2a65d8916df",
+//   }
 //
-// Is the consuimer/subscriber stuff too complicated? Is it too abstracted? It is pretty abstract, but it feels
-// hard to predict,
+// After that is fetched, the control client iterates through the objects, if it has the object in the local cache,
+// great! If not, fetch it from upstream. This creates a very simple model.
 //
-// Is moving configGetting passint the buck?
+// However, one drawback to this approach, is that if the server doesn't have an object, there is no way to generate
+// it. The hashes are fundementally one way.
 //
-// A lot of these interfaces feel like very simple things. Would they be better as typed functions?
+// Open questions with this PoC, not strictly related to the above:
 //
-// With the `lastLoaded` pattern, do we need any caching at all?
+//   - Is the consuimer/subscriber stuff too complicated? Is it too abstracted? It is pretty abstract, but it feels
+//     hard to predict,
 //
-// Is type aliasing strings at all sensible?
+//   - Is moving configGetting passing the buck?
+//
+//   - A lot of these interfaces feel like very simple things. Would they be better as typed functions?
+//
+//   - With the `lastLoaded` pattern, do we need any caching at all?
+//
+//   - Is type aliasing strings at all sensible?
 
 // consumer is an interface for something that consumes a block of block of configuration.
 type consumer interface {
