@@ -47,8 +47,11 @@ func (a *onceler) Run() error {
 	defer heartbeatTicker.Stop()
 
 	// might even be nice to figure out how to merge out tickets into once big ticker.
-	ticker := time.NewTicker(a.agent.Period())
-	defer ticker.Stop()
+	var ticker *time.Ticker
+	if a.agent.Period() > 0 {
+		ticker = time.NewTicker(a.agent.Period())
+		defer ticker.Stop()
+	}
 
 	// This is run here, and not in the for loop, because it makes it heartbeatTicker handling simple
 	if err := a.agent.Once(); err != nil {

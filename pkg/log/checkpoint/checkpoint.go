@@ -77,7 +77,7 @@ func (c *checkPointer) SetQuerier(querier querierInt) {
 }
 
 func (c *checkPointer) Name() string {
-	return "log checkpointer"
+	return "log-checkpoint"
 }
 
 func (c *checkPointer) Period() time.Duration {

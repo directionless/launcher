@@ -234,7 +234,7 @@ func runLauncher(ctx context.Context, cancel func(), opts *launcher.Options) err
 	if err != nil {
 		level.Debug(logger).Log("msg", "could not init power event watcher", "err", err)
 	} else {
-		runGroup.Add("powerEventWatcher", powerEventWatcher.Execute, powerEventWatcher.Interrupt)
+		runGroup.AddActor(rungroup.NewOnceler(logger, powerEventWatcher))
 	}
 
 	var client service.KolideService

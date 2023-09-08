@@ -4,6 +4,8 @@
 package powereventwatcher
 
 import (
+	"time"
+
 	"github.com/go-kit/kit/log"
 	"github.com/kolide/launcher/pkg/agent/types"
 )
@@ -18,11 +20,19 @@ func New(_ types.Knapsack, _ log.Logger) (*noOpPowerEventWatcher, error) {
 	}, nil
 }
 
-func (n *noOpPowerEventWatcher) Execute() error {
-	<-n.interrupt
+// Once is a no-op, since we've already registered our subscription
+func (n *noOpPowerEventWatcher) Once() error {
 	return nil
 }
 
-func (n *noOpPowerEventWatcher) Interrupt(_ error) {
-	n.interrupt <- struct{}{}
+func (n *noOpPowerEventWatcher) Cleanup() error {
+	return nil
+}
+
+func (n *noOpPowerEventWatcher) Name() string {
+	return "powerEventWatcherNoop"
+}
+
+func (n *noOpPowerEventWatcher) Period() time.Duration {
+	return 0
 }

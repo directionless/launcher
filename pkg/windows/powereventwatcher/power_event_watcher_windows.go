@@ -7,6 +7,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"syscall"
+	"time"
 	"unsafe"
 
 	"github.com/go-kit/kit/log"
@@ -95,18 +96,24 @@ func New(k types.Knapsack, logger log.Logger) (*powerEventWatcher, error) {
 	return p, nil
 }
 
-// Execute is a no-op, since we've already registered our subscription
-func (p *powerEventWatcher) Execute() error {
-	<-p.interrupt
+// Once is a no-op, since we've already registered our subscription
+func (p *powerEventWatcher) Once() error {
 	return nil
 }
 
-func (p *powerEventWatcher) Interrupt(_ error) {
+func (p *powerEventWatcher) Cleanup() error {
 	// EvtClose: https://learn.microsoft.com/en-us/windows/win32/api/winevt/nf-winevt-evtclose
 	ret, _, err := p.unsubscribeProcedure.Call(p.subscriptionHandle)
 	level.Debug(p.logger).Log("msg", "unsubscribed from power events", "ret", fmt.Sprintf("%+v", ret), "last_err", err)
+	return nil
+}
 
-	p.interrupt <- struct{}{}
+func (p *powerEventWatcher) Name() string {
+	return "powerEventWatcher"
+}
+
+func (p *powerEventWatcher) Period() time.Duration {
+	return 0
 }
 
 // onPowerEvent implements EVT_SUBSCRIBE_CALLBACK -- see https://learn.microsoft.com/en-us/windows/win32/api/winevt/nc-winevt-evt_subscribe_callback
