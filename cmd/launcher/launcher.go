@@ -211,7 +211,7 @@ func runLauncher(ctx context.Context, cancel func(), opts *launcher.Options) err
 	// Add the log checkpoints to the rungroup, and run it once early, to try to get data into the logs.
 	checkpointer := checkpoint.New(logger, k)
 	checkpointer.Once()
-	runGroup.Add("logcheckpoint", checkpointer.Run, checkpointer.Interrupt)
+	runGroup.AddActor(rungroup.NewOnceler(logger, checkpointer))
 
 	// Create a channel for signals
 	sigChannel := make(chan os.Signal, 1)

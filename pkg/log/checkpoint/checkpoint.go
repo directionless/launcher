@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/log/level"
 	"github.com/kolide/kit/version"
 	"github.com/kolide/launcher/ee/desktop/runner"
 	"github.com/kolide/launcher/pkg/agent"
@@ -77,30 +76,19 @@ func (c *checkPointer) SetQuerier(querier querierInt) {
 	c.logQueriedInfo()
 }
 
-// Run starts a log checkpoint routine. The purpose of this is to
-// ensure we get good debugging information in the logs.
-func (c *checkPointer) Run() error {
-	ticker := time.NewTicker(time.Minute * 60)
-	defer ticker.Stop()
-
-	for {
-		c.Once()
-
-		select {
-		case <-ticker.C:
-			continue
-		case <-c.interrupt:
-			level.Debug(c.logger).Log("msg", "interrupt received, exiting execute loop")
-			return nil
-		}
-	}
+func (c *checkPointer) Name() string {
+	return "log checkpointer"
 }
 
-func (c *checkPointer) Interrupt(_ error) {
-	c.interrupt <- struct{}{}
+func (c *checkPointer) Period() time.Duration {
+	return time.Minute * 60
 }
 
-func (c *checkPointer) Once() {
+func (c *checkPointer) Cleanup() error {
+	return nil
+}
+
+func (c *checkPointer) Once() error {
 	// populate and log the queried static info
 	c.queryStaticInfo()
 	c.logQueriedInfo()
@@ -126,6 +114,8 @@ func (c *checkPointer) Once() {
 	if runtime.GOOS == "windows" {
 		c.logger.Log("in_modern_standby", c.knapsack.InModernStandby())
 	}
+
+	return nil
 }
 
 func (c *checkPointer) logDesktopProcs() {

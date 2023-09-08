@@ -41,6 +41,16 @@ func (g *Group) Add(name string, execute func() error, interrupt func(error)) {
 	g.actors = append(g.actors, rungroupActor{name, execute, interrupt})
 }
 
+type rgActor interface {
+	Name() string
+	Run() error
+	Interrupt(error)
+}
+
+func (g *Group) AddActor(a rgActor) {
+	g.Add(a.Name(), a.Run, a.Interrupt)
+}
+
 func (g *Group) Run() error {
 	if len(g.actors) == 0 {
 		return nil
