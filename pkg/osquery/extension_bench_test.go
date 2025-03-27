@@ -102,11 +102,13 @@ func Benchmark_LogStore(b *testing.B) {
 	printStats(b, dbFile, iterations, iterations*chunkSize)
 	b.Logf("Done Writing. Phew. Took %s\n", b.Elapsed())
 	printStats(b, dbFile, -1, -1)
-	printStats(b, dbFile, -1, -1)
+	runtime.GC()
+	time.Sleep(5 * time.Second)
+	runtime.GC()
+	printStats(b, dbFile, -1, -2)
 
 	b.ResetTimer()
 
-	// Simulate this being called once a minute, for 3 minutes
 	i := 0
 	for {
 		i += 1
@@ -125,8 +127,10 @@ func Benchmark_LogStore(b *testing.B) {
 		}
 	}
 	b.Logf("Done Draining. Phew. Took %s\n", b.Elapsed())
-	printStats(b, dbFile, -2, -2)
-	time.Sleep(time.Second * 5)
+	printStats(b, dbFile, -2, -1)
+	runtime.GC()
+	time.Sleep(5 * time.Second)
+	runtime.GC()
 	printStats(b, dbFile, -2, -2)
 }
 
